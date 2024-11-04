@@ -81,3 +81,8 @@ class Controller:
         self._view.txt_result.controls.append(
             ft.Text(f"Calcolato il tdee (total daily energy expenditure): {tdee} kCal"))
         self._view.update_page()
+        pass
+
+    def display_all_foods(self, e):
+        self._model.get_all_foods()
+        pass

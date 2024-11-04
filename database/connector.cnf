@@ -2,5 +2,5 @@
 user=root
 password=pepsilondb
 host=127.0.0.1
-database=
+database=food_nutritions_db
 raise_on_warnings=True

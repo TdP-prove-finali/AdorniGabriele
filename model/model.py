@@ -1,3 +1,6 @@
+from database.DAO import DAO
+
+
 class Model:
 
     def __init__(self):
@@ -41,7 +44,8 @@ class Model:
 
 
     # prende dal DAO tutto il cibo
-    def get_all_food(self):
+    def get_all_foods(self):
+        print(DAO.getAllFood())
         pass
 
     # prende dal DAO il cibo filtrato in base alle preferenze (toggle)
