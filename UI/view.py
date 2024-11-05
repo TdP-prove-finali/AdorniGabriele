@@ -6,7 +6,7 @@ class View(ft.UserControl):
         super().__init__()
         # page params
         self._page = page
-        self._page.title = "Template application using MVC and DAO"
+        self._page.title = "Generatore di lista della spesa ottimizzata."
         self._page.horizontal_alignment = 'CENTER'
         self._page.theme_mode = ft.ThemeMode.LIGHT
         # controller (it is not initialized. Must be initialized in the main, after the controller is created)
