@@ -15,6 +15,7 @@ class Controller:
                           'activity_level': None,
                           'goal': None}
 
+        self._switches_state = {}
         pass
 
     def get_user_input(self):
@@ -55,6 +56,15 @@ class Controller:
             self._userData['goal'] = e.control.value
         pass
 
+    def handle_toggle_changes(self, toggle_name, new_value):
+        # Salva dinamicamente lo stato dell'interruttore
+        self._switches_state[toggle_name] = new_value
+        # print(f"{toggle_name}: {'Attivo' if new_value else 'Non attivo'}")
+
+    # Metodo per ottenere lo stato di un toggle specifico
+    def get_toggle_state(self, toggle_name):
+        return self._switches_state.get(toggle_name, False)
+
     def calculate_caloric_needs(self, e):
         # Ottieni i dati dall'utente
         user_data = self.get_user_input()
@@ -83,6 +93,23 @@ class Controller:
         self._view.update_page()
         pass
 
-    def display_all_foods(self, e):
+    def handle_display_all_foods(self, e):
+        """
+        Alla pressione del bottone corrispondente, la funzione mostra la lsita di tutti i cibi presenti nel database.
+        (opt.: filtraggio lista con ricerche o categorie...)
+        :param e:
+        :return:
+        """
         self._model.get_all_foods()
+        pass
+
+
+    def handle_generate_lists(self, e):
+        """
+        Alla pressione del bottone corrispondente, la funzione mostra una lista della spesa ottimizzata per soddisfare
+        i parametri di valori nutrizionali calcolati precedentemente, tenendo anche conto delle preferenze inserite
+        dall'utente (toggles)
+        :param e:
+        :return:
+        """
         pass

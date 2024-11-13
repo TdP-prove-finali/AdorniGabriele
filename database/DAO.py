@@ -42,7 +42,7 @@ class DAO():
                 vitaminC=decimal.Decimal(row[17]),
                 vitaminD=decimal.Decimal(row[18]),
                 vitaminE=decimal.Decimal(row[19]),
-                vitamiK=decimal.Decimal(row[20]),
+                vitaminK=decimal.Decimal(row[20]),
                 calcium=decimal.Decimal(row[21]),
                 iron=decimal.Decimal(row[22]),
                 magnesium=decimal.Decimal(row[23]),
@@ -50,6 +50,27 @@ class DAO():
                 nutritionDensity=decimal.Decimal(row[25]),
                 ID=row[26]
             ))
+
+        cursor.close()
+        cnx.close()
+        return result
+
+    @staticmethod
+    def getFoodPers(toggles_dict):
+        cnx = DBConnect.get_connection()
+
+        cursor = cnx.cursor(dictionary=True)
+
+        query = """
+                   query che prende i cibi selezionando in base alle personalizzazioni
+                    """
+
+        cursor.execute(query)
+
+        result = []
+
+        for row in cursor:
+            result.append(Food(**row))
 
         cursor.close()
         cnx.close()

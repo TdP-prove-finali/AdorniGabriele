@@ -17,7 +17,7 @@ class View(ft.UserControl):
 
     # UI elements
 
-        # --> user input
+        # --> user.py input
         self._weight_input = None
         self._height_input = None
         self._age_input = None
@@ -34,7 +34,8 @@ class View(ft.UserControl):
         self._page.controls.append(ft.Row(
             [ft.Text("Benvenuto nel tuo assistente alimentare, inserisci le informazioni richieste se vuoi ottenere dei suggerimenti\n per un piano alimentare bilanciato!")]))
 
-        # ROW 1
+
+    # ROW 1
         self._weight_input = ft.TextField(label="Peso (kg)", width=200)
         self._height_input = ft.TextField(label="Altezza (cm)", width=200)
 
@@ -44,7 +45,8 @@ class View(ft.UserControl):
                       alignment=ft.MainAxisAlignment.CENTER)
         self._page.controls.append(row1)
 
-        # ROW 2
+
+    # ROW 2
         self._age_input = ft.Dropdown(label="Età",
                                       options=[ft.dropdown.Option(str(age)) for age in range(18,81)],
                                       on_change=self._controller.handle_dd_age,
@@ -60,7 +62,8 @@ class View(ft.UserControl):
                       alignment=ft.MainAxisAlignment.CENTER)
         self._page.controls.append(row2)
 
-        # ROW 3
+
+    # ROW 3
         self._activity_input = ft.Dropdown(label="Livello di attività",
                                            options=[ft.dropdown.Option("sedentary"),
                                                     ft.dropdown.Option("light"),
@@ -79,13 +82,71 @@ class View(ft.UserControl):
                       alignment=ft.MainAxisAlignment.CENTER)
         self._page.controls.append(row3)
 
-        # ROW 4
+
+    # ROW 4
         self._tdee_btn = ft.ElevatedButton(text="CALCULATE TDEE",
                                            on_click=self._controller.calculate_caloric_needs,
                                            color='white', bgcolor='orange')
 
         row4 = ft.Row([self._tdee_btn], alignment=ft.MainAxisAlignment.CENTER)
         self._page.controls.append(row4)
+
+
+    # ROW 5 personalizzazione ulteriore per scartare a priori alcune tipologie di cibo incompatibili con l'utente
+        self._page.controls.append(ft.Row(
+            [ft.Text("Perfavore, compila il form sottostante per una lista della spesa piu compatibile con le tue preferenze alimentari...")]))
+
+        # Funzione di callback per gli switch, chiamata da on_change
+        def on_toggle_change(e, toggle_name):
+            # Passa il nome del toggle e il suo stato corrente al controller
+            self._controller.handle_toggle_changes(toggle_name, e.control.value)
+
+        categorie = [
+            {
+                'titolo': "PREFERENZE DIETA",
+                'opzioni': [
+                    {"nome": "Vegana", "switch": ft.Switch(on_change=lambda e: on_toggle_change(e, "vegana"))},
+                    {"nome": "Vegetariana", "switch": ft.Switch(on_change=lambda e: on_toggle_change(e, "vegetariana"))},
+                ]
+            },
+            {
+                "titolo": "INTOLLERANZE",
+                "opzioni": [
+                    {"nome": "Lattosio", "switch": ft.Switch(on_change=lambda e: on_toggle_change(e, "lattosio"))},
+                    {"nome": "Glutine", "switch": ft.Switch(on_change=lambda e: on_toggle_change(e, "glutine"))},
+                ]
+            },
+            {
+                "titolo": "ALLERGIE",
+                "opzioni": [
+                    {"nome": "Arachidi", "switch": ft.Switch(on_change=lambda e: on_toggle_change(e, "arachidi"))},
+                    {"nome": "Frutta secca", "switch": ft.Switch(on_change=lambda e: on_toggle_change(e, "frutta_secca"))},
+                ]
+            },
+            {
+                "titolo": "CONDIZIONI MEDICHE",
+                "opzioni": [
+                    {"nome": "Diabete", "switch": ft.Switch(on_change=lambda e: on_toggle_change(e, "diabete"))},
+                    {"nome": "Insufficienza renale", "switch": ft.Switch(on_change=lambda e: on_toggle_change(e, "insufficienza_renale"))},
+                ]
+            }
+        ]
+
+        row5 = ft.Row([
+            ft.Column(
+                [
+                    ft.Text(categoria["titolo"],),  # Titolo categoria
+                    # Aggiunta degli switch sotto ogni categoria
+                    *[
+                        ft.Row([ft.Text(opzione["nome"]), opzione["switch"]])
+                        for opzione in categoria["opzioni"]
+                    ]
+                ]
+            ) for categoria in categorie
+        ],
+        alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
+
+        self._page.controls.append(row5)
 
 
         # List View where the reply is printed

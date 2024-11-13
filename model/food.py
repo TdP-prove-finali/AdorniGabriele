@@ -23,7 +23,7 @@ class Food:
     vitaminC: decimal.Decimal
     vitaminD: decimal.Decimal
     vitaminE: decimal.Decimal
-    vitamiK: decimal.Decimal
+    vitaminK: decimal.Decimal
     calcium: decimal.Decimal
     iron: decimal.Decimal
     magnesium: decimal.Decimal
