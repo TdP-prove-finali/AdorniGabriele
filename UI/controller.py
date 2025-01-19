@@ -3,18 +3,19 @@ import flet as ft
 
 class Controller:
     def __init__(self, view, model):
-        # the view, with the graphical elements of the UI
+        # view
         self._view = view
-        # the model, which implements the logic of the program and holds the data
+        # model
         self._model = model
-
+        # dict per memorizzare i dati dell'utente che saranno inseriti in input
         self._userData = {'weight': None,
                           'height': None,
                           'age': None,
                           'gender': None,
                           'activity_level': None,
                           'goal': None}
-
+        self._tdee = None
+        # dict per memorizzare le preferenze dell'utente selezionate tramite gli switches
         self._switches_state = {}
         pass
 
@@ -81,6 +82,8 @@ class Controller:
         # Calcola il TDEE in base al livello di attività fisica
         tdee = self._model.calculate_tdee(bmr, user_data['activity_level'])
 
+        self._tdee = tdee
+
         # Personalizzazione in base all'obiettivo e alle preferenze (toggle)
         # if user_data['goal'] == 'weight_loss':
         #     tdee -= user_data['calorie_deficit']
@@ -90,12 +93,13 @@ class Controller:
         # Mostra il risultato all'utente
         self._view.txt_result.controls.append(
             ft.Text(f"Calcolato il tdee (total daily energy expenditure): {tdee} kCal"))
+
         self._view.update_page()
         pass
 
     def handle_display_all_foods(self, e):
         """
-        Alla pressione del bottone corrispondente, la funzione mostra la lsita di tutti i cibi presenti nel database.
+        Alla pressione del bottone corrispondente, la funzione mostra la lista di tutti i cibi presenti nel database.
         (opt.: filtraggio lista con ricerche o categorie...)
         :param e:
         :return:
@@ -108,8 +112,21 @@ class Controller:
         """
         Alla pressione del bottone corrispondente, la funzione mostra una lista della spesa ottimizzata per soddisfare
         i parametri di valori nutrizionali calcolati precedentemente, tenendo anche conto delle preferenze inserite
-        dall'utente (toggles)
+        dall'utente (toggles).
+        L'algoritmo terra in una cache le migliori n combinazioni cosi da poterne proporre diverse su richiesta dell'utente
         :param e:
         :return:
         """
+        # fisso i valori di self._switches_state, self._userData e self._tdee
+        preferences = self._switches_state
+        userdata = self._userData
+        tdee = self._tdee
+
+        lists = self._model.generate_lists_recursive(tdee, userdata, preferences)
+        # list_best = lists[0]
+        for food in lists:
+            self._view.txt_result_2.controls.append(f"{food.food}")
+
+        self._view.update_page()
+
         pass

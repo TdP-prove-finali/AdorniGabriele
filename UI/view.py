@@ -3,6 +3,12 @@ import flet as ft
 
 class View(ft.UserControl):
     def __init__(self, page: ft.Page):
+        page.title = "Gestione Nutrienti"
+        page.window_width = 1200  # Larghezza in pixel
+        page.window_height = 800  # Altezza in pixel
+        page.window_resizable = True  # Permette il ridimensionamento della finestra
+        page.window_maximized = False  # Non avvia in modalità massimizzata
+
         super().__init__()
         # page params
         self._page = page
@@ -26,14 +32,16 @@ class View(ft.UserControl):
         self._goal_input = None
         # --> buttons
         self._tdee_btn = None
+        self._generate_btn = None
 
     def load_interface(self):
         # title
         self._title = ft.Text("GROCERY SHOPPING LIST GENERATOR", color="orange", size=24)
         self._page.controls.append(self._title)
         self._page.controls.append(ft.Row(
-            [ft.Text("Benvenuto nel tuo assistente alimentare, inserisci le informazioni richieste se vuoi ottenere dei suggerimenti\n per un piano alimentare bilanciato!")]))
-
+            [ft.Text("Benvenuto nel tuo assistente alimentare, "
+                     "inserisci le informazioni richieste se vuoi ottenere dei suggerimenti\n "
+                     "per un piano alimentare bilanciato!")]))
 
     # ROW 1
         self._weight_input = ft.TextField(label="Peso (kg)", width=200)
@@ -44,7 +52,6 @@ class View(ft.UserControl):
         row1 = ft.Row([self._weight_input, self._height_input],
                       alignment=ft.MainAxisAlignment.CENTER)
         self._page.controls.append(row1)
-
 
     # ROW 2
         self._age_input = ft.Dropdown(label="Età",
@@ -61,7 +68,6 @@ class View(ft.UserControl):
         row2 = ft.Row([self._age_input, self._gender_input],
                       alignment=ft.MainAxisAlignment.CENTER)
         self._page.controls.append(row2)
-
 
     # ROW 3
         self._activity_input = ft.Dropdown(label="Livello di attività",
@@ -82,7 +88,6 @@ class View(ft.UserControl):
                       alignment=ft.MainAxisAlignment.CENTER)
         self._page.controls.append(row3)
 
-
     # ROW 4
         self._tdee_btn = ft.ElevatedButton(text="CALCULATE TDEE",
                                            on_click=self._controller.calculate_caloric_needs,
@@ -91,6 +96,10 @@ class View(ft.UserControl):
         row4 = ft.Row([self._tdee_btn], alignment=ft.MainAxisAlignment.CENTER)
         self._page.controls.append(row4)
 
+        # List View where the reply is printed
+        # usare ft.BarChart per il grafico che monitora i nutrienti !!!!
+        self.txt_result = ft.ListView(expand=1, spacing=10, padding=20, auto_scroll=True)
+        self._page.controls.append(ft.Container(content=self.txt_result, bgcolor="#F0F0F0", border_radius=10))
 
     # ROW 5 personalizzazione ulteriore per scartare a priori alcune tipologie di cibo incompatibili con l'utente
         self._page.controls.append(ft.Row(
@@ -105,22 +114,22 @@ class View(ft.UserControl):
             {
                 'titolo': "PREFERENZE DIETA",
                 'opzioni': [
-                    {"nome": "Vegana", "switch": ft.Switch(on_change=lambda e: on_toggle_change(e, "vegana"))},
-                    {"nome": "Vegetariana", "switch": ft.Switch(on_change=lambda e: on_toggle_change(e, "vegetariana"))},
+                    {"nome": "Vegano", "switch": ft.Switch(on_change=lambda e: on_toggle_change(e, "Vegano"))},
+                    {"nome": "Vegetariana", "switch": ft.Switch(on_change=lambda e: on_toggle_change(e, "Vegetariano"))},
                 ]
             },
             {
                 "titolo": "INTOLLERANZE",
                 "opzioni": [
-                    {"nome": "Lattosio", "switch": ft.Switch(on_change=lambda e: on_toggle_change(e, "lattosio"))},
-                    {"nome": "Glutine", "switch": ft.Switch(on_change=lambda e: on_toggle_change(e, "glutine"))},
+                    {"nome": "Lattosio", "switch": ft.Switch(on_change=lambda e: on_toggle_change(e, "Lattosio"))},
+                    {"nome": "Glutine", "switch": ft.Switch(on_change=lambda e: on_toggle_change(e, "Glutine"))},
                 ]
             },
             {
                 "titolo": "ALLERGIE",
                 "opzioni": [
-                    {"nome": "Arachidi", "switch": ft.Switch(on_change=lambda e: on_toggle_change(e, "arachidi"))},
-                    {"nome": "Frutta secca", "switch": ft.Switch(on_change=lambda e: on_toggle_change(e, "frutta_secca"))},
+                    {"nome": "Arachidi", "switch": ft.Switch(on_change=lambda e: on_toggle_change(e, "Arachidi"))},
+                    {"nome": "Frutta secca", "switch": ft.Switch(on_change=lambda e: on_toggle_change(e, "Frutta secca"))},
                 ]
             },
             {
@@ -148,12 +157,21 @@ class View(ft.UserControl):
 
         self._page.controls.append(row5)
 
+    # ROW 6
+        self._generate_btn = ft.ElevatedButton(text="GENERATE LIST",
+                                           on_click=self._controller.handle_generate_lists,
+                                           color='white', bgcolor='orange')
+        row6 = ft.Row([self._generate_btn],alignment=ft.MainAxisAlignment.CENTER)
+        self._page.controls.append(row6)
 
-        # List View where the reply is printed
-        self.txt_result = ft.ListView(expand=1, spacing=10, padding=20, auto_scroll=True)
-        self._page.controls.append(self.txt_result)
+    # List View where the reply is printed
+        # usare ft.BarChart per il grafico che monitora i nutrienti !!!!
+        self.txt_result_2 = ft.ListView(expand=1, spacing=10, padding=20, auto_scroll=True)
+        self._page.controls.append(ft.Container(content=self.txt_result_2,
+                                                bgcolor="#F0F0F0",
+                                                border_radius=10,
+                                                height=200))
         self._page.update()
-
 
     # others View's functions
     @property

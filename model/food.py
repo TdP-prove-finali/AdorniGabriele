@@ -4,31 +4,31 @@ from dataclasses import dataclass
 class Food:
     ID: int
     food: str
-    caloricValue: decimal.Decimal
-    fats: decimal.Decimal
-    saturatedFats: decimal.Decimal
-    carbohydrates: decimal.Decimal
-    sugars: decimal.Decimal
-    proteins: decimal.Decimal
-    fibers: decimal.Decimal
-    cholesterol: decimal.Decimal
-    sodium: decimal.Decimal
-    vitaminA: decimal.Decimal
-    vitaminB1: decimal.Decimal
-    vitaminB12: decimal.Decimal
-    vitaminB2: decimal.Decimal
-    vitaminB3: decimal.Decimal
-    vitaminB5: decimal.Decimal
-    vitaminB6: decimal.Decimal
-    vitaminC: decimal.Decimal
-    vitaminD: decimal.Decimal
-    vitaminE: decimal.Decimal
-    vitaminK: decimal.Decimal
-    calcium: decimal.Decimal
-    iron: decimal.Decimal
-    magnesium: decimal.Decimal
-    potassium: decimal.Decimal
-    nutritionDensity: decimal.Decimal
+    CaloricValue: decimal.Decimal
+    Fat: decimal.Decimal
+    SaturatedFats: decimal.Decimal
+    Carbohydrates: decimal.Decimal
+    # sugars: decimal.Decimal
+    Protein: decimal.Decimal
+    Fiber: decimal.Decimal
+    # cholesterol: decimal.Decimal
+    Sodium: decimal.Decimal
+    # vitaminA: decimal.Decimal
+    # vitaminB1: decimal.Decimal
+    # vitaminB12: decimal.Decimal
+    # vitaminB2: decimal.Decimal
+    # vitaminB3: decimal.Decimal
+    # vitaminB5: decimal.Decimal
+    # vitaminB6: decimal.Decimal
+    VitaminC: decimal.Decimal
+    VitaminD: decimal.Decimal
+    # vitaminE: decimal.Decimal
+    # vitaminK: decimal.Decimal
+    Calcium: decimal.Decimal
+    Iron: decimal.Decimal
+    # magnesium: decimal.Decimal
+    Potassium: decimal.Decimal
+    NutritionDensity: decimal.Decimal
 
 
 

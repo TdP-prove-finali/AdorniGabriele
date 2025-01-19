@@ -56,7 +56,10 @@ class DAO():
         return result
 
     @staticmethod
-    def getFoodPers(toggles_dict):
+    def getFoodPer(toggles_dict):
+
+
+
         cnx = DBConnect.get_connection()
 
         cursor = cnx.cursor(dictionary=True)
@@ -75,6 +78,49 @@ class DAO():
         cursor.close()
         cnx.close()
         return result
+
+    @staticmethod
+    def getFoodPers(switches_state: dict) -> list[Food]:
+        """
+        Recupera gli alimenti filtrati in base alle preferenze degli switch.
+        :param switches_state: Dizionario che contiene lo stato degli switch (es. Vegano: True/False).
+        :return: Lista di oggetti Food filtrata.
+        """
+        cnx = DBConnect.get_connection()
+        cursor = cnx.cursor(dictionary=True)
+
+        result = []
+
+        query = """
+            SELECT 
+                f.ID, f.food, f.`Caloric Value` AS CaloricValue, f.Fat, f.`Saturated Fats` AS SaturatedFats, 
+                f.Carbohydrates, f.Protein, f.`Dietary Fiber` AS Fiber, f.Sodium, 
+                f.`Vitamin C` AS VitaminC, f.`Vitamin D` AS VitaminD, f.Calcium, f.Iron, f.Potassium, 
+                f.`Nutrition Density` AS NutritionDensity
+            FROM food_nutrients AS f
+            INNER JOIN food_params AS p ON f.ID = p.ID
+            WHERE 1=1
+        """
+
+        # Aggiungi filtri in base allo stato degli switch attivi
+        conditions = []
+        for toggle_name, is_active in switches_state.items():
+            if is_active:  # Aggiungi filtro solo se l'interruttore è attivo
+                conditions.append(f"p.{toggle_name} = 1")
+
+        if conditions:
+            query += " AND " + " AND ".join(conditions)
+
+        # Esegui la query e restituisci i risultati come oggetti Food
+        cursor.execute(query)
+        for row in cursor:
+            result.append(Food(**row))
+        cursor.close()
+        cnx.close()
+
+        return result
+
+
 
 
 
