@@ -1,5 +1,7 @@
 import decimal
 from dataclasses import dataclass
+
+
 @dataclass
 class Food:
     ID: int
@@ -29,8 +31,6 @@ class Food:
     # magnesium: decimal.Decimal
     Potassium: decimal.Decimal
     NutritionDensity: decimal.Decimal
-
-
 
     def __str__(self):
         return str(f"ID: {self.ID}, {self.food}")

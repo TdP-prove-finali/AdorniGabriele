@@ -1,3 +1,7 @@
+import decimal
+import random
+import pulp
+from decimal import Decimal, ROUND_HALF_UP
 from database.DAO import DAO
 from model.food import Food
 
@@ -6,11 +10,24 @@ class Model:
 
     def __init__(self):
         self.all_foods_list = None
-
         pass
 
-    # Metodo per calcolare il bmr (Basal Metabolic Rate)
     def calculate_bmr(self, weight, height, age, gender):
+        """
+        Il metodo calculate_bmr calcola il Basal Metabolic Rate (BMR), ovvero il metabolismo basale, utilizzando la
+        formula Mifflin-St Jeor. In base al genere, la formula applicata è:
+        Per gli uomini:
+        BMR = 0 * peso(kg) + 6.25 * altezza(cm) − 5 * eta(anni) + 5
+        Per le donne:
+        BMR = 10 * peso(kg) + 6.25 * altezza(cm) − 5 * eta(anni) − 161
+        Il metodo converte i parametri in float e restituisce il BMR, espresso in kilocalorie al giorno, che rappresenta
+        l'energia minima necessaria per mantenere le funzioni vitali a riposo.
+        :param weight:
+        :param height:
+        :param age:
+        :param gender:
+        :return:
+        """
         if gender == 'male':
             # Formula per gli uomini
             bmr = 10 * float(weight) + 6.25 * float(height) - 5 * float(age) + 5
@@ -22,6 +39,16 @@ class Model:
     # Metodo per calcolare il TDEE (Total Daily Energy Expenditure) in base al livello di attività fisica
 
     def calculate_tdee(self, bmr, activity_level):
+        """
+        Il metodo calculate_tdee calcola il Total Daily Energy Expenditure (TDEE), ovvero il fabbisogno energetico
+        giornaliero totale, partendo dal BMR (Basal Metabolic Rate) e moltiplicandolo per un coefficiente di attività
+        fisica. In sintesi uesta funzione fornisce una stima del consumo calorico giornaliero in base al metabolismo basale e
+        all'intensità dell'attività fisica svolta.
+        :param bmr: basal metabolic rate calcolato nell'apposito metodo
+        :param activity_level: input dell'uitente tramite dropdown, corrispondono alle cinque chiavi del dizionario
+        activity_multipliers
+        :return: TDEE
+        """
 
         activity_multipliers = {
             'sedentary': 1.2,
@@ -35,20 +62,9 @@ class Model:
 
         return round(bmr * activity_multipliers.get(activity_level), 2)
 
-    # Metodo per personalizzare il TDEE in base all'obiettivo dell'utente (es. perdita di peso, mantenimento, aumento di massa)
-
-    def adjust_for_goal(self, tdee, goal):
-        if goal == 'weight_loss':
-            return tdee - 500  # Riduzione calorica per perdere peso
-        elif goal == 'weight_gain':
-            return tdee + 500  # Aumento calorico per aumentare massa
-        else:
-            return tdee  # Mantenimento
-
-    # prende dal DAO tutto il cibo
     def get_all_foods(self):
         self.all_foods_list = DAO.getAllFood()
-        pass
+        return self.all_foods_list
 
     # prende dal DAO il cibo filtrato in base alle preferenze (toggle)
     def get_filtered_food(self, list_of_preferences):
@@ -56,134 +72,170 @@ class Model:
         self.filtered_food_list = lista_temp
         return lista_temp
 
-    # calcola il fabbisogno di nutrienti in base ai parametri dell'utente presi in input
+
     @staticmethod
-    def calculate_nutrients_requirement(tdee: float, userdata: dict):
-        weight = float(userdata["weight"])
+    def calculate_nutrients_requirement(tdee_input, userdata: dict) -> dict:
+        """
+        Calcola i fabbisogni nutrizionali a partire dal TDEE (Total Daily Energy Expenditure)
+        e dai dati dell'utente, restituendo un dizionario con i nutrienti espressi come Decimal.
+
+        :param tdee_input: Il TDEE (preferibilmente già un Decimal, altrimenti verrà convertito).
+        :param userdata: Dizionario contenente i dati dell'utente, ad esempio "weight", "gender" e "age".
+        :return: Dizionario dei requisiti nutrizionali.
+        """
+        tdee = tdee_input if isinstance(tdee_input, Decimal) else Decimal(str(tdee_input))
+        weight = Decimal(str(userdata["weight"]))
+        gender = userdata["gender"]
+        age = int(userdata["age"])
+
+        # arrotondamento a 2 cifre decimali
+        # UNITA DI MISURA DEI VALORI:
+        # g: Fat, SaturatedFats, Carbohydrates, Protein, Fiber, Sodium(essendo
+        # mg: VitaminC, Calcium, Iron, Potassium
+        # 'mu'g: VitaminD
         requirements = {
-            "Calories": tdee,
-            "Fat": round(0.3 * tdee / 9, 2),  # 30% delle kcal dai grassi totali (g)
-            "SaturatedFats": round(0.1 * tdee / 9, 2),  # 10% delle kcal da grassi saturi (g)
-            "Carbohydrates": round(0.5 * tdee / 4, 2),  # 50% delle kcal dai carboidrati (g)
-            "Protein": weight * (0.8 if userdata["gender"] == "Female" else 1.0),  # 0.8g/kg per donne, 1g/kg per uomini
-            "Fiber": 25 if userdata["gender"] == "Female" else 30,  # Obiettivo giornaliero di fibre (g)
-            "Sodium": 1500 if int(userdata["age"]) < 50 else 1300,  # mg, raccomandazioni per età
-            "VitaminC": 75 if userdata["gender"] == "Female" else 90,  # mg
-            "VitaminD": 15,  # mcg (valore generico)
-            "Calcium": 1000,  # mg
-            "Iron": 18 if userdata["gender"] == "Female" else 8,  # mg
-            "Potassium": 3400 if userdata["gender"] == "Male" else 2600,  # mg
+            "CaloricValue": tdee,
+            "Fat": (Decimal('0.3') * tdee / Decimal('9')).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
+            "SaturatedFats": (Decimal('0.1') * tdee / Decimal('9')).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
+            "Carbohydrates": (Decimal('0.5') * tdee / Decimal('4')).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
+            "Protein": (weight * (Decimal('0.8') if gender == "Female" else Decimal('1.0'))).quantize(Decimal('0.01'),
+                                                                                                      rounding=ROUND_HALF_UP),
+            "Fiber": Decimal('25') if gender == "Female" else Decimal('30'),
+            "Sodium": Decimal('1500') if age < 50 else Decimal('1300'),
+            "VitaminC": Decimal('75') if gender == "Female" else Decimal('90'),
+            "VitaminD": Decimal('15'),
+            "Calcium": Decimal('1000'),
+            "Iron": Decimal('18') if gender == "Female" else Decimal('8'),
+            "Potassium": Decimal('3400') if gender == "Male" else Decimal('2600'),
         }
-        print(sum(requirements.values()))
         return requirements
 
-
-    def generate_lists_recursive_v0_no_tolerance(self, tdee: float, userdata: dict, preferences: dict,  max_items: int = 10) -> list[Food]:
+    def milp_optimization(self, tdee: float, userdata: dict, preferences: dict):
         """
-        Genera una lista ottimizzata di cibi usando un approccio ricorsivo.
-        :param tdee: Calorie totali giornaliere (kcal).
-        :param userdata: Dizionario con i parametri dell'utente
-        :param preferences: Dizionario con le preferenze dietetiche dell'utente
-        :param max_items: Numero massimo di prodotti nella lista.
-        :return: Lista ottimizzata di oggetti Food.
+        Genera una lista della spesa ottimizzata utilizzando un modello MILP.
+
+        Il modello si concentra su 5 nutrienti fondamentali:
+          - CaloricValue, Protein, Carbohydrates, Fat e Fiber
+
+        I target nutrizionali sono ottenuti dalla funzione calculate_nutrients_requirement,
+        e vengono pesati in base all'impatto calorico:
+          - Protein e Carbohydrates: 4 kcal/g
+          - Fat: 9 kcal/g
+          - CaloricValue: 1 (già in kcal)
+          - Fiber: 0.5
         """
-        food_list = self.get_filtered_food(preferences)
-        requirements = self.calculate_nutrients_requirement(tdee, userdata)
-        best_list = []
-        best_diff = float('inf')
+        foods = self.get_filtered_food(preferences)
+        random.shuffle(foods)
 
-        def helper(current_list, remaining_foods, current_fabbisogno, current_calories):
-            nonlocal best_list, best_diff
+        target = self.calculate_nutrients_requirement(tdee, userdata)
+        nutrient_keys = ["CaloricValue", "Protein", "Carbohydrates", "Fat", "Fiber"]
+        target_floats = {k: float(target[k]) for k in nutrient_keys}
 
-            # Se abbiamo raggiunto il numero massimo di prodotti, valuta la soluzione
-            if len(current_list) == max_items:
-                if current_calories > tdee:  # Scarta combinazioni che superano le calorie
-                    return
+        prob = pulp.LpProblem("GroceryOptimization", pulp.LpMinimize)
 
-                # Calcola la differenza dai fabbisogni
-                diff = sum(
-                    abs(current_fabbisogno[key] - sum(float(getattr(food, key, 0)) for food in current_list))
-                    for key in requirements
-                )
+        # Definizione variabili decisionali per ogni alimento (numero di porzioni, intero)
+        food_vars = {}
+        for food in foods:
+            food_vars[food.ID] = pulp.LpVariable(f"x_{food.ID}", lowBound=0, upBound=5, cat="Integer")
 
-                # Aggiorna la migliore soluzione se necessario
-                if diff < best_diff:
-                    best_diff = diff
-                    best_list = list(current_list)
-                return
+        # Variabili slack per misurare le deviazioni dai target
+        d_plus = {}
+        d_minus = {}
+        for n in nutrient_keys:
+            d_plus[n] = pulp.LpVariable(f"d_plus_{n}", lowBound=0, cat="Continuous")
+            d_minus[n] = pulp.LpVariable(f"d_minus_{n}", lowBound=0, cat="Continuous")
 
-            # Esplora le combinazioni aggiungendo un nuovo alimento
-            for i, food in enumerate(remaining_foods):
-                # Aggiungi il nuovo alimento, ma solo se non supera le calorie
-                new_calories = current_calories + food.CaloricValue
-                if new_calories <= tdee:
-                    new_fabbisogno = {key: current_fabbisogno[key] - float(getattr(food, key, 0)) for key in requirements}
-                    helper(current_list + [food], remaining_foods[i + 1:], new_fabbisogno, new_calories)
+        nutrient_weights = {
+            "CaloricValue": 1.0,
+            "Protein": 4.0,
+            "Carbohydrates": 4.0,
+            "Fat": 9.0,
+            "Fiber": 0.5
+        }
 
-        # Avvio della ricorsione
-        helper([], food_list, requirements, 0)
-        print(list(food for food in best_list))
-        return best_list
+        # Funzione obiettivo: minimizzo la somma pesata delle deviazioni
+        prob += pulp.lpSum([nutrient_weights[n] * (d_plus[n] + d_minus[n]) for n in nutrient_keys])
 
-    def generate_lists_recursive(self, tdee: float, userdata: dict, preferences: dict, max_items: int = 20) -> list[
-        Food]:
+        # Vincoli per ciascun nutriente: somma_i (valore_i * x_i) + d_minus - d_plus = target
+        for n in nutrient_keys:
+            prob += (pulp.lpSum([float(getattr(food, n)) * food_vars[food.ID] for food in foods])
+                     + d_minus[n] - d_plus[n] == target_floats[n]), f"constraint_{n}"
+
+        # Vincolo sul numero totale di porzioni (ad es. tra 5 e 15)
+        prob += pulp.lpSum([food_vars[food.ID] for food in foods]) >= 5, "min_servings"
+        prob += pulp.lpSum([food_vars[food.ID] for food in foods]) <= 15, "max_servings"
+
+        # limit e gapRel per accettare una soluzione sub-ottimale in pochi secondi
+        prob.solve(pulp.PULP_CBC_CMD(timeLimit=5, gapRel=0.1, msg=True))
+
+        solution = []
+        for food in foods:
+            qty = food_vars[food.ID].varValue
+            if qty and qty > 0:
+                solution.append((food, qty))
+
+        objective_value = pulp.value(prob.objective)
+        print(f"Optimal objective (sub-optimal accettata): {objective_value}")
+        for n in nutrient_keys:
+            print(f"{n}: d_plus = {d_plus[n].varValue}, d_minus = {d_minus[n].varValue}")
+
+        return solution, objective_value
+
+    def get_similar_products(self, food):
         """
-        Genera una lista ottimizzata di cibi usando un approccio ricorsivo.
-        :param tdee: Calorie totali giornaliere (kcal).
-        :param userdata: Dizionario di dati dell'utente.
-        :param preferences: Preferenze degli utenti riguardo la dieta.
-        :param max_items: Numero massimo di prodotti nella lista.
-        :return: Lista ottimizzata di oggetti Food.
+        Restituisce una lista di alimenti simili a quello passato, basandosi sui valori dei nutrienti.
+        Si considerano i nutrienti: Protein, Carbohydrates, Fat e Fiber.
+
+        L'approccio è quello di verificare che la differenza relativa (in percentuale) per ogni nutriente
+        sia inferiore a una soglia prestabilita (ad esempio, il 10%).
+
+        Se il valore del nutriente del cibo di riferimento è 0, viene utilizzata una soglia fissa (ad esempio 0.1 unità).
         """
-        food_list = self.get_filtered_food(preferences)
-        requirements = self.calculate_nutrients_requirement(tdee, userdata)
-        tolerance = 100.0  # Tolleranza sul TDEE in kcal
+        # Soglia di differenza accettabile (10%)
+        threshold = 0.10
+        # Lista dei nutrienti da confrontare (escludiamo CaloricValue)
+        nutrient_keys = ["Protein", "Carbohydrates", "Fat", "Fiber"]
 
-        best_list = []
-        best_diff = float('inf')
+        # Ottieni la lista completa dei cibi dal database
+        food_list = self.get_all_foods()
+        similar_food_list = []
 
-        def _recursion(current_list, remaining_foods, current_fabbisogno, current_calories):
-            nonlocal best_list, best_diff
-            print(len(current_list))
-            print(current_calories)
+        for f in food_list:
+            if f.ID == food.ID:
+                continue
+
+            is_similar = True
+            for nutrient in nutrient_keys:
+                value_original = float(getattr(food, nutrient))
+                value_candidate = float(getattr(f, nutrient))
+                if value_original != 0:
+                    relative_diff = abs(value_original - value_candidate) / value_original
+                    if relative_diff > threshold:
+                        is_similar = False
+                        break
+                else:
+                    if abs(value_candidate) > 0.1:
+                        is_similar = False
+                        break
+            if is_similar:
+                similar_food_list.append(f)
+
+        return similar_food_list
+
+    def get_total_nutrients(self, list, nutrient_keys):
+        nutrient_totals = {nutrient:0.0 for nutrient in nutrient_keys}
+        for food, qty in list:
+            for nutrient in nutrient_keys:
+                nutrient_totals[nutrient] += float(getattr(food, nutrient)) * qty
+        return nutrient_totals
+
+    def get_foods_by_micronutrient(self, nutrient):
+        food_list = DAO.getFoodByNutrient(nutrient)
+        return food_list
 
 
-            # Condizione di uscita: il numero massimo di elementi è stato raggiunto
-            if len(current_list) == max_items:
-                # Controlla se le calorie sono entro il margine di tolleranza
-                if abs(float(current_calories) - tdee) > tolerance:
-                    return
 
-                # Calcola la differenza totale rispetto ai fabbisogni
-                diff = sum(
-                    abs(current_fabbisogno[key] - sum(float(getattr(food, key, 0)) for food in current_list))
-                    for key in requirements
-                )
-                print(diff)
 
-                # Aggiorna la migliore soluzione trovata
-                if diff < best_diff:
-                    best_diff = diff
-                    best_list = list(current_list)
-                return
-
-            # Esplora le combinazioni aggiungendo un nuovo alimento
-            for i, food in enumerate(remaining_foods):
-                # Controlla se il cibo supera lo spazio calorico rimanente
-                if current_calories + food.CaloricValue > tdee + tolerance:
-                    continue  # Salta questo alimento
-                if food in current_list:
-                    continue
-
-                # Aggiorna i fabbisogni correnti sottraendo i valori del cibo scelto
-                new_fabbisogno = {key: current_fabbisogno[key] - float(getattr(food, key, 0)) for key in requirements}
-
-                # Ricorsione con la lista aggiornata
-                _recursion(current_list + [food], remaining_foods, new_fabbisogno, current_calories + food.CaloricValue)
-
-        # Avvio della ricorsione
-        _recursion([], food_list, requirements, 0)
-        return best_list
 
 
 
