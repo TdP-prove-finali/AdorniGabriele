@@ -17,6 +17,27 @@ class Controller:
         self._tdee = None
         # dict per memorizzare le preferenze dell'utente selezionate tramite gli switches
         self._switches_state = {}
+        self.micronutrient_mapping = {
+            "Vitamin C (mg)": "Vitamin C",
+            "Vitamin D (µg)": "Vitamin D",
+            "Calcium (mg)": "Calcium",
+            "Iron (mg)": "Iron",
+            "Potassium (mg)": "Potassium",
+            "Vitamin A (mg)": "Vitamin A",
+            "Vitamin B1 (mg)": "Vitamin B1",
+            "Vitamin B12 (mg)": "Vitamin B12",
+            "Vitamin B2 (mg)": "Vitamin B2",
+            "Vitamin B3 (mg)": "Vitamin B3",
+            "Vitamin B5 (mg)": "Vitamin B5",
+            "Vitamin B6 (mg)": "Vitamin B6",
+            "Vitamin E (mg)": "Vitamin E",
+            "Vitamin K (mg)": "Vitamin K",
+            "Magnesium (mg)": "Magnesium",
+            "Phosphorus (mg)": "Phosphorus",
+            "Selenium (mg)": "Selenium",
+            "Zinc (mg)": "Zinc"
+        }
+
         pass
 
     def get_user_input(self):
@@ -30,7 +51,6 @@ class Controller:
         return self._userData
 
     def handle_dd_age(self, e):
-        print("Activity level selected:", e.control.value)
         if e.control.value is None:
             self._userData['age'] = None
         else:
@@ -86,10 +106,17 @@ class Controller:
         best_solution, best_objective = self._model.milp_optimization(tdee, userdata, preferences)
 
         self._view.txt_result_2.controls.clear()
-        self._view.txt_result_2.controls.append(ft.Text(f"Optimal objective: {best_objective}"))
-        self._view.txt_result_2.controls.append(ft.Text("Best solution:"))
+        # self._view.txt_result_2.controls.append(ft.Text(f"Optimal objective: {best_objective}"))
+        tot_kcal = 0
         for food, qty in best_solution:
-            self._view.txt_result_2.controls.append(ft.Text(f" - {food.food}: {qty} porzioni"))
+            tot_kcal += float(food.CaloricValue) * qty
+        self._view.txt_result_2.controls.append(ft.Text(f"Target: {self._tdee} -> Best solution: {tot_kcal} (* 1 porzione = 100g di prodotto)"))
+        for food, qty in best_solution:
+            self._view.txt_result_2.controls.append(ft.Text(f" - {food.food}: {qty} porzioni. "
+                                                            f"(Apporto nutrizionale: proteine {food.Protein} g, "
+                                                            f"carboidrati {food.Carbohydrates} g, "
+                                                            f"grassi {food.Fat} g, fibre {food.Fiber} g; "
+                                                            f"Apporto calorico: {food.CaloricValue}kcal"))
 
         nutrient_keys = ["CaloricValue", "Protein", "Carbohydrates", "Fat", "Fiber", "Sodium", "VitaminC", "VitaminD", "Calcium", "Iron", "Potassium"]
         nutrient_totals = self._model.get_total_nutrients(best_solution, nutrient_keys)
@@ -100,6 +127,7 @@ class Controller:
         self._view.create_personalization_section(best_solution)
         self.setup_personalization_handlers()
 
+        self._view._refresh_btn.disabled = False
         self._view.update_page()
 
     def setup_personalization_handlers(self):
@@ -243,37 +271,38 @@ class Controller:
         Aggiorna il Text del nutrition fact in base al micronutriente selezionato e, eventualmente,
         aggiorna anche la listview informativa con i cibi ordinati per quel micronutriente.
         """
-
         selected_nutrient = self._view.micronutrient_dropdown.value
+        nutrient_for_query = self.micronutrient_mapping[selected_nutrient]
+
         print(f'nutriente {selected_nutrient} selezionato')
         if not selected_nutrient:
             return
 
         nutrient_facts = {
-            "VitaminC": "La Vitamina C è fondamentale per il sistema immunitario e l'assorbimento del ferro.",
-            "VitaminD": "La Vitamina D favorisce l'assorbimento del calcio e supporta la salute delle ossa.",
+            "Vitamin C": "La Vitamina C è fondamentale per il sistema immunitario e l'assorbimento del ferro.",
+            "Vitamin D": "La Vitamina D favorisce l'assorbimento del calcio e supporta la salute delle ossa.",
             "Calcium": "Il Calcio è essenziale per ossa e denti forti.",
             "Iron": "Il Ferro è vitale per il trasporto dell'ossigeno nel sangue.",
             "Potassium": "Il Potassio aiuta a mantenere la pressione sanguigna e la funzione muscolare.",
-            "VitaminA": "La Vitamina A è importante per la vista, la crescita e il sistema immunitario.",
-            "VitaminB1": "La Vitamina B1 (tiamina) è essenziale per il metabolismo energetico e la funzione nervosa.",
-            "VitaminB12": "La Vitamina B12 è cruciale per la formazione dei globuli rossi e la salute del sistema nervoso.",
-            "VitaminB2": "La Vitamina B2 (riboflavina) supporta la produzione di energia e la salute della pelle.",
-            "VitaminB3": "La Vitamina B3 (niacina) aiuta a mantenere la pelle sana e supporta il sistema nervoso.",
-            "VitaminB5": "La Vitamina B5 (acido pantotenico) è importante per il metabolismo e la sintesi degli ormoni.",
-            "VitaminB6": "La Vitamina B6 è necessaria per il metabolismo delle proteine e la funzione cerebrale.",
-            "VitaminE": "La Vitamina E è un potente antiossidante che protegge le cellule dai danni.",
-            "VitaminK": "La Vitamina K è fondamentale per la coagulazione del sangue e la salute ossea.",
+            "Vitamin A": "La Vitamina A è importante per la vista, la crescita e il sistema immunitario.",
+            "Vitamin B1": "La Vitamina B1 (tiamina) è essenziale per il metabolismo energetico e la funzione nervosa.",
+            "Vitamin B12": "La Vitamina B12 è cruciale per la formazione dei globuli rossi e la salute del sistema nervoso.",
+            "Vitamin B2": "La Vitamina B2 (riboflavina) supporta la produzione di energia e la salute della pelle.",
+            "Vitamin B3": "La Vitamina B3 (niacina) aiuta a mantenere la pelle sana e supporta il sistema nervoso.",
+            "Vitamin B5": "La Vitamina B5 (acido pantotenico) è importante per il metabolismo e la sintesi degli ormoni.",
+            "Vitamin B6": "La Vitamina B6 è necessaria per il metabolismo delle proteine e la funzione cerebrale.",
+            "Vitamin E": "La Vitamina E è un potente antiossidante che protegge le cellule dai danni.",
+            "Vitamin K": "La Vitamina K è fondamentale per la coagulazione del sangue e la salute ossea.",
             "Magnesium": "Il Magnesio è essenziale per centinaia di reazioni enzimatiche, inclusa la produzione di energia.",
             "Phosphorus": "Il Fosforo è fondamentale per la formazione di ossa e denti e il metabolismo energetico.",
             "Selenium": "Il Selenio agisce come antiossidante e supporta la funzione tiroidea.",
             "Zinc": "Lo Zinco è importante per il sistema immunitario e la guarigione delle ferite."
         }
 
-        fact = nutrient_facts.get(selected_nutrient, "Informazioni sul micronutriente non disponibili.")
+        fact = nutrient_facts.get(nutrient_for_query, "Informazioni sul micronutriente non disponibili.")
         self._view.nutrient_fact_text.value = fact
 
-        sorted_foods = self._model.get_foods_by_micronutrient(selected_nutrient)
+        sorted_foods = self._model.get_foods_by_micronutrient(nutrient_for_query)
         self._view.micronutrient_listview.controls.clear()
         for food, qty in sorted_foods:
             self._view.micronutrient_listview.controls.append(
@@ -294,20 +323,27 @@ class Controller:
             if qty > 0:
                 personalized_solution.append((controls["food"], qty))
 
-        # aggiorno l'area di output (txt_result_2) con la nuova lista personalizzata
-        self._view.txt_result_2.controls.clear()
-        self._view.txt_result_2.controls.append(ft.Text("Personalized list:"))
+        tot_kcal = 0
         for food, qty in personalized_solution:
-            self._view.txt_result_2.controls.append(ft.Text(f"{food.food}: {qty} portions"))
+            tot_kcal += float(food.CaloricValue) * qty
+        self._view.txt_result_2.controls.append(
+            ft.Text(f"Target: {self._tdee} -> Best solution: {tot_kcal} (* 1 porzione = 100g di prodotto)"))
+        for food, qty in personalized_solution:
+            self._view.txt_result_2.controls.append(ft.Text(f" - {food.food}: {qty} porzioni. "
+                                                            f"(Apporto nutrizionale: proteine {food.Protein} g, "
+                                                            f"carboidrati {food.Carbohydrates} g, "
+                                                            f"grassi {food.Fat} g, fibre {food.Fiber} g; "
+                                                            f"Apporto calorico: {food.CaloricValue}kcal"))
 
         nutrient_keys = ["CaloricValue", "Protein", "Carbohydrates", "Fat", "Fiber", "Sodium", "VitaminC", "VitaminD", "Calcium", "Iron", "Potassium"]  # quelli usati nel grafico
         nutrient_totals = self._model.get_total_nutrients(personalized_solution, nutrient_keys)
 
         target = self._model.calculate_nutrients_requirement(self._tdee, self._userData)
 
-
         # Aggiornamento grafico usando la funzione update_nutrient_chart (che riceve sia i totali ottenuti che i target)
         self._view.update_nutrient_chart(nutrient_totals, target)
+        self._view.create_personalization_section(personalized_solution)
+        self.setup_personalization_handlers()
 
         self._view.create_alert("Modifiche confermate e grafico aggiornato.")
         self._view.update_page()
@@ -342,10 +378,18 @@ class Controller:
         best_solution, best_objective = self._model.milp_optimization(self._tdee, self._userData, self._switches_state)
 
         self._view.txt_result_2.controls.clear()
-        self._view.txt_result_2.controls.append(ft.Text(f"Optimal objective: {best_objective}"))
-        self._view.txt_result_2.controls.append(ft.Text("Best solution:"))
+
+        tot_kcal = 0
         for food, qty in best_solution:
-            self._view.txt_result_2.controls.append(ft.Text(f"{food.food}: {qty} porzioni"))
+            tot_kcal += float(food.CaloricValue) * qty
+        self._view.txt_result_2.controls.append(
+            ft.Text(f"Target: {self._tdee} -> Best solution: {tot_kcal} (* 1 porzione = 100g di prodotto)"))
+        for food, qty in best_solution:
+            self._view.txt_result_2.controls.append(ft.Text(f" - {food.food}: {qty} porzioni. "
+                                                            f"(Apporto nutrizionale: proteine {food.Protein} g, "
+                                                            f"carboidrati {food.Carbohydrates} g, "
+                                                            f"grassi {food.Fat} g, fibre {food.Fiber} g; "
+                                                            f"Apporto calorico: {food.CaloricValue}kcal"))
 
         self._view.create_personalization_section(best_solution)
 
@@ -354,10 +398,8 @@ class Controller:
         nutrient_totals = self._model.get_total_nutrients(best_solution, nutrient_keys)
         target = self._model.calculate_nutrients_requirement(self._tdee, self._userData)
         self._view.update_nutrient_chart(nutrient_totals, target)
+        self._view.create_personalization_section(best_solution)
+        self.setup_personalization_handlers()
 
         self._view.update_page()
-
-
-
-
 

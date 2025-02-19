@@ -144,7 +144,6 @@ class Model:
         for n in nutrient_keys:
             d_plus[n] = pulp.LpVariable(f"d_plus_{n}", lowBound=0, cat="Continuous")
             d_minus[n] = pulp.LpVariable(f"d_minus_{n}", lowBound=0, cat="Continuous")
-
         nutrient_weights = {
             "CaloricValue": 1.0,
             "Protein": 4.0,
@@ -167,13 +166,11 @@ class Model:
 
         # limit e gapRel per accettare una soluzione sub-ottimale in pochi secondi
         prob.solve(pulp.PULP_CBC_CMD(timeLimit=5, gapRel=0.1, msg=True))
-
         solution = []
         for food in foods:
             qty = food_vars[food.ID].varValue
             if qty and qty > 0:
                 solution.append((food, qty))
-
         objective_value = pulp.value(prob.objective)
         print(f"Optimal objective (sub-optimal accettata): {objective_value}")
         for n in nutrient_keys:
@@ -232,16 +229,4 @@ class Model:
     def get_foods_by_micronutrient(self, nutrient):
         food_list = DAO.getFoodByNutrient(nutrient)
         return food_list
-
-
-
-
-
-
-
-
-
-
-
-
 

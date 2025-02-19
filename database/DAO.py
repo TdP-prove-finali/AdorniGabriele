@@ -48,6 +48,14 @@ class DAO():
         for toggle_name, is_active in switches_state.items():
             if is_active:
                 conditions.append(f"p.{toggle_name} = 1")
+            if toggle_name == 'Arachidi':
+                conditions.remove(f"p.{toggle_name} = 1")
+            if toggle_name == '`frutta secca`':
+                conditions.remove(f"p.{toggle_name} = 1")
+            if toggle_name == 'Lattosio':
+                conditions.remove(f"p.{toggle_name} = 1")
+            if toggle_name == 'Glutine':
+                conditions.remove(f"p.{toggle_name} = 1")
 
         if conditions:
             query += " AND " + " AND ".join(conditions)
