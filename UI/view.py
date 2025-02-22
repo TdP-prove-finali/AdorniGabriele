@@ -264,7 +264,7 @@ class View(ft.UserControl):
             content=self.txt_result_2,
             bgcolor=BACKGROUND_COLOR,
             border_radius=10,
-            height=200,
+            height=500,
             padding=10
         )
         self._page.controls.append(container)
@@ -280,14 +280,15 @@ class View(ft.UserControl):
             bottom_axis=ft.ChartAxis(labels=[]),
             interactive=True,
             width=1000,
-            height=600,
+            height=800,
         )
         container = ft.Container(
             content=self._nutrient_chart,
             bgcolor=BACKGROUND_COLOR,
             border_radius=10,
             expand=True,
-            padding=10
+            padding=10,
+            clip_behavior=ft.ClipBehavior.NONE
         )
         self._page.controls.append(container)
 
